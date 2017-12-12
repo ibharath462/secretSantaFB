@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "348114510856",
+    "firebase_url": "https://chrismomchat.firebaseio.com",
+    "project_id": "chrismomchat",
+    "storage_bucket": "chrismomchat.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:348114510856:android:de78620513de402c",
+        "android_client_info": {
+          "package_name": "com.example.bharath.chrismom"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "348114510856-vg88tj209i1imae7tav40aohc5j95kjv.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.bharath.chrismom",
+            "certificate_hash": "d3e5b3186b5031afa4f95e1c28fe6d9e80e3df95"
+          }
+        },
+        {
+          "client_id": "348114510856-q3vi5276rkpg95r80asvbtivaknvtfqe.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDHtq8dnWy7YMGvh6lwvuDBxQ7uG4-hCyA"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "348114510856-q3vi5276rkpg95r80asvbtivaknvtfqe.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
