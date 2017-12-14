@@ -49,7 +49,7 @@ public class SignInActivity extends AppCompatActivity implements GoogleApiClient
     private static final String TAG = "SignInActivity";
     private static final int RC_SIGN_IN = 9001;
     private SignInButton mSignInButton;
-    EditText chrisSon;
+    EditText chrisSon,chrisGroup;
 
     private GoogleApiClient mGoogleApiClient;
     private FirebaseAuth mFirebaseAuth;
@@ -62,6 +62,7 @@ public class SignInActivity extends AppCompatActivity implements GoogleApiClient
         // Assign fields
         mSignInButton = (SignInButton) findViewById(R.id.sign_in_button);
         chrisSon = (EditText)findViewById(R.id.chrisson);
+        chrisGroup = (EditText)findViewById(R.id.chrisGroup);
 
         // Set click listeners
         mSignInButton.setOnClickListener(this);
@@ -109,6 +110,7 @@ public class SignInActivity extends AppCompatActivity implements GoogleApiClient
         else{
             SharedPreferences prefs = getSharedPreferences("com.example.bharath.osdict", MODE_PRIVATE);
             prefs.edit().putString("ChrisSon", chrisSon.getText().toString()).commit();
+            prefs.edit().putString("ChrisGroup", chrisGroup.getText().toString()).commit();
             Intent signInIntent = Auth.GoogleSignInApi.getSignInIntent(mGoogleApiClient);
             startActivityForResult(signInIntent, RC_SIGN_IN);
         }

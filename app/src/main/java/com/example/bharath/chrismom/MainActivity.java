@@ -1,12 +1,17 @@
 package com.example.bharath.chrismom;
 
+import android.*;
+import android.Manifest;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomNavigationView;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
@@ -23,22 +28,29 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.firebase.ui.database.FirebaseRecyclerAdapter;
 import com.firebase.ui.database.FirebaseRecyclerOptions;
 import com.firebase.ui.database.SnapshotParser;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.remoteconfig.FirebaseRemoteConfig;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.UploadTask;
 
 import de.hdodenhof.circleimageview.CircleImageView;
+
+import static android.provider.Settings.*;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -60,14 +72,14 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private static final String TAG = "MainActivity";
-    public static final String MESSAGES_CHILD = "messages";
+    public static String MESSAGES_CHILD = "messages";
     private static final int REQUEST_INVITE = 1;
     private static final int REQUEST_IMAGE = 2;
     public static final int DEFAULT_MSG_LENGTH_LIMIT = 10;
     public static String ANONYMOUS = "anonymous";
     private static final String MESSAGE_SENT_EVENT = "message_sent";
     private static final String MESSAGE_URL = "http://friendlychat.firebase.google.com/message/";
-    private static final String LOADING_IMAGE_URL = "https://www.google.com/images/spin-32.gif";
+    private static final String LOADING_IMAGE_URL = "http://www.gifs.cc/christmas/santa-pulled-by-reindeer.gif";
 
 
     private String mUsername;
@@ -94,12 +106,22 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED)
+            if (ActivityCompat.shouldShowRequestPermissionRationale(MainActivity.this, android.Manifest.permission.READ_EXTERNAL_STORAGE)) {
+
+            } else {
+
+                // No explanation needed, we can request the permission.
+
+                ActivityCompat.requestPermissions(MainActivity.this, new String[]{android.Manifest.permission.READ_EXTERNAL_STORAGE}, 1);
+        }
+
         mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
         mProgressBar = (ProgressBar) findViewById(R.id.progressBar);
         SharedPreferences prefs = getSharedPreferences("com.example.bharath.osdict", MODE_PRIVATE);
         ANONYMOUS = prefs.getString("ChrisSon","") + "'s mom";
+        MESSAGES_CHILD = prefs.getString("ChrisGroup","");
         mUsername = ANONYMOUS;
-
         goAnonympus = (CheckBox)findViewById(R.id.checkBox);
         mMessageRecyclerView = (RecyclerView) findViewById(R.id.messageRecyclerView);
         mLinearLayoutManager = new LinearLayoutManager(this);
@@ -143,6 +165,17 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        mAddMessageImageView = (ImageView) findViewById(R.id.addMessageImageView);
+        mAddMessageImageView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+                intent.addCategory(Intent.CATEGORY_OPENABLE);
+                intent.setType("image/*");
+                startActivityForResult(intent, REQUEST_IMAGE);
+            }
+        });
+
         mSendButton = (Button) findViewById(R.id.sendButton);
         mMessageEditText = (EditText) findViewById(R.id.messageEditText);
         mSendButton.setOnClickListener(new View.OnClickListener() {
@@ -181,32 +214,32 @@ public class MainActivity extends AppCompatActivity {
                     viewHolder.messageTextView.setVisibility(TextView.VISIBLE);
                     viewHolder.messageImageView.setVisibility(ImageView.GONE);
                 } else {
-//                    String imageUrl = friendlyMessage.getImageUrl();
-//                    if (imageUrl.startsWith("gs://")) {
-//                        StorageReference storageReference = FirebaseStorage.getInstance()
-//                                .getReferenceFromUrl(imageUrl);
-//                        storageReference.getDownloadUrl().addOnCompleteListener(
-//                                new OnCompleteListener<Uri>() {
-//                                    @Override
-//                                    public void onComplete(@NonNull Task<Uri> task) {
-//                                        if (task.isSuccessful()) {
-//                                            String downloadUrl = task.getResult().toString();
-//                                            Glide.with(viewHolder.messageImageView.getContext())
-//                                                    .load(downloadUrl)
-//                                                    .into(viewHolder.messageImageView);
-//                                        } else {
-//                                            Log.w(TAG, "Getting download url was not successful.",
-//                                                    task.getException());
-//                                        }
-//                                    }
-//                                });
-//                    } else {
-//                        Glide.with(viewHolder.messageImageView.getContext())
-//                                .load(friendlyMessage.getImageUrl())
-//                                .into(viewHolder.messageImageView);
-//                    }
-//                    viewHolder.messageImageView.setVisibility(ImageView.VISIBLE);
-//                    viewHolder.messageTextView.setVisibility(TextView.GONE);
+                    String imageUrl = friendlyMessage.getImageUrl();
+                    if (imageUrl.startsWith("gs://")) {
+                        StorageReference storageReference = FirebaseStorage.getInstance()
+                                .getReferenceFromUrl(imageUrl);
+                        storageReference.getDownloadUrl().addOnCompleteListener(
+                                new OnCompleteListener<Uri>() {
+                                    @Override
+                                    public void onComplete(@NonNull Task<Uri> task) {
+                                        if (task.isSuccessful()) {
+                                            String downloadUrl = task.getResult().toString();
+                                            Glide.with(viewHolder.messageImageView.getContext())
+                                                    .load(downloadUrl)
+                                                    .into(viewHolder.messageImageView);
+                                        } else {
+                                            Log.w(TAG, "Getting download url was not successful.",
+                                                    task.getException());
+                                        }
+                                    }
+                                });
+                    } else {
+                        Glide.with(viewHolder.messageImageView.getContext())
+                                .load(friendlyMessage.getImageUrl())
+                                .into(viewHolder.messageImageView);
+                    }
+                    viewHolder.messageImageView.setVisibility(ImageView.VISIBLE);
+                    viewHolder.messageTextView.setVisibility(TextView.GONE);
                 }
 
 
@@ -257,6 +290,90 @@ public class MainActivity extends AppCompatActivity {
     public void onResume() {
         super.onResume();
         mFirebaseAdapter.startListening();
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        Log.d(TAG, "onActivityResult: requestCode=" + requestCode + ", resultCode=" + resultCode);
+
+        if (requestCode == REQUEST_IMAGE) {
+            if (resultCode == RESULT_OK) {
+                if (data != null) {
+                    final Uri uri = data.getData();
+                    Log.d(TAG, "Uri: " + uri.toString());
+
+                    FriendlyMessage tempMessage = new FriendlyMessage(null, mUsername, mPhotoUrl,
+                            LOADING_IMAGE_URL);
+                    mFirebaseDatabaseReference.child(MESSAGES_CHILD).push()
+                            .setValue(tempMessage, new DatabaseReference.CompletionListener() {
+                                @Override
+                                public void onComplete(DatabaseError databaseError,
+                                                       DatabaseReference databaseReference) {
+                                    if (databaseError == null) {
+                                        String key = databaseReference.getKey();
+                                        StorageReference storageReference =
+                                                FirebaseStorage.getInstance()
+                                                        .getReference(mFirebaseUser.getUid())
+                                                        .child(key)
+                                                        .child(uri.getLastPathSegment());
+
+                                        putImageInStorage(storageReference, uri, key);
+                                    } else {
+                                        Log.w(TAG, "Unable to write message to database.",
+                                                databaseError.toException());
+                                    }
+                                }
+                            });
+                }
+            }
+        }
+    }
+
+    private void putImageInStorage(StorageReference storageReference, Uri uri, final String key) {
+        storageReference.putFile(uri).addOnCompleteListener(MainActivity.this,
+                new OnCompleteListener<UploadTask.TaskSnapshot>() {
+                    @Override
+                    public void onComplete(@NonNull Task<UploadTask.TaskSnapshot> task) {
+                        if (task.isSuccessful()) {
+                            FriendlyMessage friendlyMessage =
+                                    new FriendlyMessage(null, mUsername, mPhotoUrl,
+                                            task.getResult().getDownloadUrl()
+                                                    .toString());
+                            mFirebaseDatabaseReference.child(MESSAGES_CHILD).child(key)
+                                    .setValue(friendlyMessage);
+                        } else {
+                            Log.w(TAG, "Image upload task was not successful.",
+                                    task.getException());
+                        }
+                    }
+                });
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           String permissions[], int[] grantResults) {
+        switch (requestCode) {
+            case 1: {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+
+                    // permission was granted, yay! Do the
+                    // contacts-related task you need to do.
+                    Toast.makeText(getApplicationContext(),"yaaay",Toast.LENGTH_SHORT).show();
+
+                } else {
+
+                    // permission denied, boo! Disable the
+                    // functionality that depends on this permission.
+                }
+                return;
+            }
+
+            // other 'case' lines to check for other
+            // permissions this app might request
+        }
     }
 
 }
