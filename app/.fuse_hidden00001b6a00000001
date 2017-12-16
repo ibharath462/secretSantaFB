@@ -15,6 +15,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "348114510856-87hsqs731rmdnl4ieuhg2oo2b35ggll5.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.bharath.chrismom",
+            "certificate_hash": "028f00279b66c030601bc1322dca9652c896518e"
+          }
+        },
+        {
           "client_id": "348114510856-vg88tj209i1imae7tav40aohc5j95kjv.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
